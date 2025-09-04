@@ -1,3 +1,4 @@
+// src/app/transactions/page.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -8,11 +9,11 @@ import {
   Calendar,
   DollarSign,
   XCircle, // New icon for clear filters
+  Download, // For PDF download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-// IMPORTANT: Ensure you have shadcn/ui's Select, SelectTrigger, SelectContent, SelectItem, SelectValue
 import {
   Select,
   SelectTrigger,
@@ -20,7 +21,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label"; // Imported Label for better form semantics
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -31,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import Navbar from "@/components/layout/navbar";
 import Sidebar from "@/components/layout/sidebar";
-import { useInventory } from "@/lib/hooks/use-inventory";
+import { useInventory } from "@/lib/hooks/use-inventory"; // Ensure this hook fetches from API
 import {
   formatCurrency,
   formatDate,
@@ -39,17 +40,31 @@ import {
 } from "@/lib/utils";
 import { InventoryItem } from "@/lib/types/inventory";
 
+// Import jsPDF
+import jsPDF from "jspdf";
+
+// Define a type for the summary data returned by the API
+interface DailySummaryResult {
+  date: string;
+  totalTransactionsCount: number;
+  totalMoneyIn: number; // Sum of stock_out totalAmount (Sales Revenue)
+  totalMoneyOut: number; // Sum of stock_in totalAmount (Purchase Cost)
+  netFlow: number; // totalMoneyIn - totalMoneyOut
+  grossProfitFromSales: number; // (sellPrice - buyPrice) * quantity for stock_out where sellPrice > buyPrice
+  lossFromBelowCostSales: number; // (buyPrice - sellPrice) * quantity for stock_out where sellPrice < buyPrice
+}
+
 const transactionTypeConfig = {
   stock_in: {
-    label: "Stock In",
+    label: "Stock In (Purchase)",
     icon: TrendingUp,
-    variant: "success" as const,
+    variant: "success" as const, // This variant is for the badge color, not financial impact text
     description: "Items added to inventory",
   },
   stock_out: {
-    label: "Stock Out",
+    label: "Stock Out (Sale)",
     icon: TrendingDown,
-    variant: "destructive" as const,
+    variant: "destructive" as const, // This variant is for the badge color, not financial impact text
     description: "Items removed from inventory",
   },
   adjustment: {
@@ -58,11 +73,10 @@ const transactionTypeConfig = {
     variant: "warning" as const,
     description: "Stock level adjustments",
   },
-  // If 'transfer' is not used, you might remove it or fully implement its logic
   transfer: {
     label: "Transfer",
-    icon: RefreshCw, // Or a different icon for transfer
-    variant: "secondary" as const, // Changed to secondary for general default
+    icon: RefreshCw,
+    variant: "secondary" as const,
     description: "Items moved between locations",
   },
 };
@@ -75,17 +89,17 @@ export default function TransactionsPage() {
   const [itemFilter, setItemFilter] = useState("all");
 
   const { inventory, transactions, stats, exportData, importData } =
-    useInventory();
+    useInventory(); // Ensure useInventory fetches from API
 
   // Get unique items that have transactions
   const itemsWithTransactions = useMemo(() => {
     const itemIds = new Set(transactions.map((t) => t.itemId));
     return inventory
-      .filter((item) => itemIds.has(item.id!)) // Add ! here, assuming items in transactions have IDs
+      .filter((item) => itemIds.has(item.id!))
       .filter(
         (item): item is InventoryItem & { id: string } =>
           typeof item.id === "string"
-      ) // Explicitly filter for defined IDs
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [inventory, transactions]);
 
@@ -106,25 +120,23 @@ export default function TransactionsPage() {
     // Date filter
     if (dateFilter !== "all") {
       const now = new Date();
-      const filterDate = new Date(); // This will be the start of the filter period
+      const filterStartDate = new Date(); // This will be the start of the filter period
 
       switch (dateFilter) {
         case "today":
-          filterDate.setHours(0, 0, 0, 0);
+          filterStartDate.setHours(0, 0, 0, 0);
           break;
         case "week":
-          filterDate.setDate(now.getDate() - 7);
-          filterDate.setHours(0, 0, 0, 0); // Start of the day 7 days ago
+          filterStartDate.setDate(now.getDate() - 7); // Past 7 days
+          filterStartDate.setHours(0, 0, 0, 0);
           break;
         case "month":
-          filterDate.setMonth(now.getMonth() - 1);
-          filterDate.setDate(1); // Start of the month 1 month ago
-          filterDate.setHours(0, 0, 0, 0);
+          filterStartDate.setMonth(now.getMonth() - 1); // Past month
+          filterStartDate.setHours(0, 0, 0, 0);
           break;
         case "quarter":
-          filterDate.setMonth(now.getMonth() - 3);
-          filterDate.setDate(1); // Start of the month 3 months ago
-          filterDate.setHours(0, 0, 0, 0);
+          filterStartDate.setMonth(now.getMonth() - 3); // Past quarter
+          filterStartDate.setHours(0, 0, 0, 0);
           break;
         default:
           // For 'all' or unrecognized, don't apply a date filter
@@ -132,7 +144,9 @@ export default function TransactionsPage() {
       }
 
       if (dateFilter !== "all") {
-        filtered = filtered.filter((t) => new Date(t.createdAt) >= filterDate);
+        filtered = filtered.filter(
+          (t) => new Date(t.createdAt) >= filterStartDate
+        );
       }
     }
 
@@ -142,24 +156,44 @@ export default function TransactionsPage() {
     );
   }, [transactions, typeFilter, itemFilter, dateFilter]);
 
-  // Calculate transaction stats
+  // Calculate transaction stats for summary cards (based on current filters)
   const transactionStats = useMemo(() => {
     const totalTransactions = filteredTransactions.length;
-    const totalStockInValue = filteredTransactions
-      .filter((t) => t.type === "stock_in")
-      .reduce((sum, t) => sum + t.totalAmount, 0);
-    const totalStockOutValue = filteredTransactions
-      .filter((t) => t.type === "stock_out")
-      .reduce((sum, t) => sum + t.totalAmount, 0);
-    const netFlow = totalStockOutValue - totalStockInValue; // Assuming stock_out is revenue, stock_in is cost
+    let totalStockInValue = 0; // Cost of goods bought (Total Purchases)
+    let totalStockOutValue = 0; // Revenue from goods sold (Total Sales Revenue)
+    let totalGrossProfit = 0;
+    let totalLossSales = 0;
+
+    filteredTransactions.forEach((t) => {
+      if (t.type === "stock_in") {
+        totalStockInValue += t.totalAmount;
+      } else if (t.type === "stock_out") {
+        totalStockOutValue += t.totalAmount;
+        const soldItem = inventory.find((item) => item.id === t.itemId);
+        if (soldItem) {
+          // Profit is calculated as (Sale Price - Buy Price) * Quantity
+          const profit = (t.unitPrice - soldItem.buyPrice) * t.quantity;
+          if (profit > 0) {
+            totalGrossProfit += profit;
+          } else {
+            totalLossSales += Math.abs(profit); // Abs value of negative profit is loss
+          }
+        }
+      }
+    });
+
+    // Net flow is typically Sales Revenue - Purchase Cost
+    const netFlow = totalStockOutValue - totalStockInValue;
 
     return {
       totalTransactions,
-      totalStockInValue,
-      totalStockOutValue,
-      netFlow,
+      totalStockInValue, // Total Cost of Purchases
+      totalStockOutValue, // Total Revenue from Sales
+      netFlow, // Net money movement
+      totalGrossProfit,
+      totalLossSales,
     };
-  }, [filteredTransactions]);
+  }, [filteredTransactions, inventory]);
 
   const getItemName = (itemId: string) => {
     const item = inventory.find((i) => i.id === itemId);
@@ -194,6 +228,151 @@ export default function TransactionsPage() {
 
   const hasActiveFilters =
     typeFilter !== "all" || dateFilter !== "all" || itemFilter !== "all";
+
+  // --- PDF Download Function ---
+  const handleDownloadPdfSummary = async (period: string) => {
+    try {
+      // The API is designed to return an aggregated summary for 'week', 'month', 'quarter', 'today'
+      const response = await fetch(`/api/daily-summaries?range=${period}`);
+      if (!response.ok) {
+        throw new Error(
+          `Error fetching ${period} summary: ${response.statusText}`
+        );
+      }
+      const summaryData: DailySummaryResult = await response.json(); // API returns a single aggregated/daily summary object
+
+      if (!summaryData || summaryData.totalTransactionsCount === 0) {
+        alert(
+          `No transaction data found for the ${period} period to generate a summary.`
+        );
+        return;
+      }
+
+      const doc = new jsPDF();
+      let yOffset = 20;
+
+      // Title
+      doc.setFontSize(24);
+      doc.text("Inventory Summary Report", 105, yOffset, { align: "center" });
+      yOffset += 15;
+
+      // Period
+      doc.setFontSize(14);
+      // Use the 'date' field from summaryData, which will be "Aggregated: start - end" for range, or actual date for 'today'
+      doc.text(
+        `Period: ${
+          summaryData.date || period.charAt(0).toUpperCase() + period.slice(1)
+        }`,
+        10,
+        yOffset
+      );
+      yOffset += 10;
+      doc.text(`Generated On: ${formatDate(new Date())}`, 10, yOffset);
+      yOffset += 20;
+
+      // Key Metrics - For a 5-year-old
+      doc.setFontSize(18);
+      doc.text("Here's what happened:", 10, yOffset);
+      yOffset += 10;
+
+      const addMetric = (label: string, value: number, color?: string) => {
+        doc.setFontSize(14);
+        doc.text(label, 20, yOffset);
+        doc.setTextColor(color || "#000000"); // Default to black
+        doc.setFont("helvetica", "bold");
+        doc.text(formatCurrency(value), 190, yOffset, { align: "right" });
+        doc.setTextColor("#000000"); // Reset color
+        doc.setFont("helvetica", "normal");
+        yOffset += 8;
+      };
+
+      doc.setFontSize(14);
+      doc.text(
+        `Total transactions: ${summaryData.totalTransactionsCount} times!`,
+        20,
+        yOffset
+      );
+      yOffset += 15;
+
+      // Money earned (Sales Revenue) - Green
+      addMetric(
+        "Money we earned (Sales Revenue):",
+        summaryData.totalMoneyIn,
+        "#22C55E" // Green
+      );
+      // Money spent (Purchase Cost) - Blue
+      addMetric(
+        "Money we spent (Purchase Cost):",
+        summaryData.totalMoneyOut,
+        "#3B82F6" // Blue
+      );
+
+      yOffset += 10;
+
+      // Overall Net Flow - Green for profit, Red for loss, Gray for break-even
+      let netFlowColor = "#6B7280"; // Gray
+      let netFlowEmoji = "😐";
+      let netFlowText = "You broke even!";
+      if (summaryData.netFlow > 0) {
+        netFlowColor = "#10B981"; // Stronger Green
+        netFlowEmoji = "💰";
+        netFlowText = "Great job! You made money!";
+      } else if (summaryData.netFlow < 0) {
+        netFlowColor = "#EF4444"; // Red
+        netFlowEmoji = "💸";
+        netFlowText = "Oops! You spent more than you earned.";
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(netFlowColor);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        `Overall Money Flow: ${formatCurrency(
+          summaryData.netFlow
+        )} ${netFlowEmoji}`,
+        20,
+        yOffset
+      );
+      doc.setFontSize(12);
+      doc.text(netFlowText, 20, yOffset + 7);
+      doc.setTextColor("#000000"); // Reset color
+      doc.setFont("helvetica", "normal");
+      yOffset += 20;
+
+      // Profit from good sales - Green
+      doc.setFontSize(14);
+      addMetric(
+        "Profit from good sales:",
+        summaryData.grossProfitFromSales,
+        "#22C55E"
+      );
+      // Loss from tricky sales - Red
+      addMetric(
+        "Loss from tricky sales:",
+        summaryData.lossFromBelowCostSales,
+        "#EF4444"
+      );
+
+      // Footer
+      doc.setFontSize(10);
+      doc.text(
+        "--- End of Report ---",
+        105,
+        doc.internal.pageSize.height - 15,
+        { align: "center" }
+      );
+
+      doc.save(
+        `inventory-summary-${period}-${
+          new Date().toISOString().split("T")[0]
+        }.pdf`
+      );
+      alert(`Downloaded ${period} summary PDF.`);
+    } catch (error: any) {
+      console.error("Download summary error:", error);
+      alert(`Failed to download ${period} summary: ${error.message}`);
+    }
+  };
 
   return (
     <div className={`min-h-screen bg-gray-100 ${darkMode ? "dark" : ""}`}>
@@ -247,13 +426,13 @@ export default function TransactionsPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Stock In Value
+                    Total Purchases
                   </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-green-500" />{" "}
-                  {/* Changed to explicit green */}
+                  <TrendingUp className="h-4 w-4 text-blue-500" />{" "}
+                  {/* Blue icon for purchase costs */}
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-500">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-500">
                     {formatCurrency(transactionStats.totalStockInValue)}
                   </div>
                 </CardContent>
@@ -262,13 +441,13 @@ export default function TransactionsPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Stock Out Value
+                    Total Sales Revenue
                   </CardTitle>
-                  <TrendingDown className="h-4 w-4 text-red-500" />{" "}
-                  {/* Changed to explicit red */}
+                  <TrendingDown className="h-4 w-4 text-green-500" />{" "}
+                  {/* Green icon for sales revenue */}
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600 dark:text-red-500">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-500">
                     {formatCurrency(transactionStats.totalStockOutValue)}
                   </div>
                 </CardContent>
@@ -277,7 +456,7 @@ export default function TransactionsPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Net Flow
+                    Net Profit/Loss
                   </CardTitle>
                   <DollarSign className="h-4 w-4 text-gray-400" />
                 </CardHeader>
@@ -291,14 +470,18 @@ export default function TransactionsPage() {
                         : "text-gray-600 dark:text-gray-400"
                     }`}
                   >
-                    {formatCurrency(Math.abs(transactionStats.netFlow))}
+                    {formatCurrency(transactionStats.netFlow)}
                   </div>
+                  {/* Displays total gross profit and total loss sales breakdown */}
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {transactionStats.netFlow > 0
-                      ? "Net Profit"
-                      : transactionStats.netFlow < 0
-                      ? "Net Outflow"
-                      : "Net Zero"}
+                    Gross Profit:{" "}
+                    <span className="text-green-600 dark:text-green-500 font-medium">
+                      {formatCurrency(transactionStats.totalGrossProfit)}
+                    </span>{" "}
+                    | Loss Sales:{" "}
+                    <span className="text-red-600 dark:text-red-500 font-medium">
+                      {formatCurrency(transactionStats.totalLossSales)}
+                    </span>
                   </p>
                 </CardContent>
               </Card>
@@ -321,11 +504,14 @@ export default function TransactionsPage() {
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Items</SelectItem>
-                        {itemsWithTransactions.map((item) => (
-                          // item.id is now guaranteed to be 'string' due to the filter above
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
+                        <SelectItem value="all">All Types</SelectItem>
+                        {Object.keys(transactionTypeConfig).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {
+                              transactionTypeConfig[
+                                type as keyof typeof transactionTypeConfig
+                              ].label
+                            }
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -379,8 +565,6 @@ export default function TransactionsPage() {
 
                   {/* Clear Filters Button */}
                   <div className="flex items-end">
-                    {" "}
-                    {/* Align button to the bottom if other inputs are taller */}
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -395,6 +579,41 @@ export default function TransactionsPage() {
                       Clear Filters
                     </Button>
                   </div>
+                </div>
+
+                {/* Download Summary Buttons */}
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
+                  <h3 className="w-full text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Download Summary Reports (PDF)
+                  </h3>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleDownloadPdfSummary("today")}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" /> Daily Summary
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleDownloadPdfSummary("week")}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" /> Weekly Summary
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleDownloadPdfSummary("month")}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" /> Monthly Summary
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleDownloadPdfSummary("quarter")}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" /> Quarterly Summary
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -439,7 +658,7 @@ export default function TransactionsPage() {
                             Unit Price
                           </TableHead>
                           <TableHead className="text-gray-600 dark:text-gray-300">
-                            Total Amount
+                            Financial Impact
                           </TableHead>
                           <TableHead className="text-gray-600 dark:text-gray-300">
                             Reference
@@ -456,12 +675,58 @@ export default function TransactionsPage() {
                               transaction.type as keyof typeof transactionTypeConfig
                             ];
                           const Icon = config ? config.icon : RefreshCw;
+                          // Find item here for profit/loss calculation
+                          const item = inventory.find(
+                            (i) => i.id === transaction.itemId
+                          );
+
+                          let financialImpactAmount = transaction.totalAmount;
+                          let financialImpactColorClass =
+                            "text-gray-900 dark:text-gray-100";
+                          let financialImpactLabel = "";
+
+                          if (transaction.type === "stock_out") {
+                            if (item) {
+                              const profitPerUnit =
+                                item.sellPrice - item.buyPrice;
+                              const totalProfit =
+                                profitPerUnit * transaction.quantity;
+                              financialImpactAmount = totalProfit; // Display profit/loss for sales
+
+                              if (totalProfit > 0) {
+                                financialImpactColorClass =
+                                  "text-green-600 dark:text-green-500";
+                                financialImpactLabel = "Profit";
+                              } else if (totalProfit < 0) {
+                                financialImpactColorClass =
+                                  "text-red-600 dark:text-red-500";
+                                financialImpactLabel = "Loss";
+                              } else {
+                                financialImpactColorClass =
+                                  "text-gray-600 dark:text-gray-400";
+                                financialImpactLabel = "Break-Even Sale";
+                              }
+                            } else {
+                              // Item not found, display sale revenue in green as a general inflow
+                              financialImpactColorClass =
+                                "text-green-600 dark:text-green-500";
+                              financialImpactLabel = "Sale Revenue";
+                              financialImpactAmount = transaction.totalAmount;
+                            }
+                          } else if (transaction.type === "stock_in") {
+                            // Purchases are costs, display in blue
+                            financialImpactColorClass =
+                              "text-blue-600 dark:text-blue-500";
+                            financialImpactLabel = "Purchase Cost";
+                            financialImpactAmount = transaction.totalAmount; // Display actual cost
+                          } else {
+                            // Default for adjustment, transfer etc.
+                            financialImpactLabel = "Net Value";
+                          }
 
                           return (
                             <TableRow key={transaction.id}>
                               <TableCell className="align-top py-3">
-                                {" "}
-                                {/* Aligned top for multi-line content */}
                                 <div className="space-y-0.5">
                                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {formatDate(transaction.createdAt)}
@@ -510,16 +775,18 @@ export default function TransactionsPage() {
                                 {formatCurrency(transaction.unitPrice)}
                               </TableCell>
 
+                              {/* MODIFIED: Financial Impact column */}
                               <TableCell className="align-top py-3">
                                 <span
-                                  className={`font-semibold ${
-                                    transaction.type === "stock_out"
-                                      ? "text-red-600 dark:text-red-500"
-                                      : "text-green-600 dark:text-green-500"
-                                  }`}
+                                  className={`font-semibold ${financialImpactColorClass}`}
                                 >
-                                  {formatCurrency(transaction.totalAmount)}
+                                  {formatCurrency(financialImpactAmount)}
                                 </span>
+                                {financialImpactLabel && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {financialImpactLabel}
+                                  </p>
+                                )}
                               </TableCell>
 
                               <TableCell className="align-top py-3">
