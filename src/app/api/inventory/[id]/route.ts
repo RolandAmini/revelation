@@ -6,13 +6,12 @@ import { InventoryItem } from "@/lib/types/inventory"; // For typing
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
   try {
-    const { id } = params;
+    const { id } = await params;
     const item = await Inventory.findById(id);
-
     if (!item) {
       return NextResponse.json({ message: "Item not found" }, { status: 404 });
     }
@@ -30,23 +29,20 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
   try {
-    const { id } = params;
+    const { id } = await params;
     const updates: Partial<InventoryItem> = await req.json();
-
     const updatedItem = await Inventory.findByIdAndUpdate(
       id,
       { ...updates, updatedAt: new Date().toISOString() },
       { new: true, runValidators: true }
     );
-
     if (!updatedItem) {
       return NextResponse.json({ message: "Item not found" }, { status: 404 });
     }
-
     return NextResponse.json(updatedItem);
   } catch (error: unknown) {
     console.error("API Error updating item:", error);
@@ -61,19 +57,16 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
   try {
-    const { id } = params;
+    const { id } = await params;
     const deletedItem = await Inventory.findByIdAndDelete(id);
-
     if (!deletedItem) {
       return NextResponse.json({ message: "Item not found" }, { status: 404 });
     }
-
     await Transaction.deleteMany({ itemId: id });
-
     return new Response(null, { status: 204 });
   } catch (error: unknown) {
     console.error("API Error deleting item:", error);
