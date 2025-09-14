@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "InventoryPro - Professional Inventory Management",
+  title: "Revelation Inventory",
   description:
-    "Complete inventory management system with advanced analytics and financial tracking",
+    "Complete Revelation inventory management system with advanced analytics and financial tracking",
 };
 
 export default function RootLayout({
