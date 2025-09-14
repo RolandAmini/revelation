@@ -1,26 +1,24 @@
-// src/app/api/transactions/route.ts
 import { NextResponse } from "next/server";
-import dbConnect from "@/app/api/db/connect"; // Import DB connection
-import Transaction from "@/models/Transaction"; // Import Transaction Model
-import Inventory from "@/models/Inventory"; // Import Inventory Model to update stock levels
-import { StockTransaction } from "@/lib/types/inventory"; // For typing
-
-// GET /api/transactions - Fetch all transactions
+import dbConnect from "@/app/api/db/connect";
+import Transaction from "@/models/Transaction";
+import Inventory from "@/models/Inventory";
+import { StockTransaction } from "@/lib/types/inventory";
 export async function GET() {
   await dbConnect();
   try {
     const transactions = await Transaction.find({});
     return NextResponse.json(transactions);
-  } catch (error: any) {
-    console.error("API Error fetching transactions:", error);
+  } catch (error: unknown) {
+    console.error("API Error recording transaction:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Failed to fetch transactions", error: error.message },
+      { message: "Failed to record transaction", error: errorMessage },
       { status: 500 }
     );
   }
 }
 
-// POST /api/transactions - Record a new transaction
 export async function POST(req: Request) {
   await dbConnect();
   try {
@@ -62,10 +60,12 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(newTransaction, { status: 201 });
-  } catch (error: any) {
-    console.error("API Error recording transaction:", error);
+  } catch (error: unknown) {
+    console.error("API Error fetching transactions:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Failed to record transaction", error: error.message },
+      { message: "Failed to fetch transactions", error: errorMessage },
       { status: 500 }
     );
   }

@@ -43,28 +43,27 @@ import { InventoryItem } from "@/lib/types/inventory";
 // Import jsPDF
 import jsPDF from "jspdf";
 
-// Define a type for the summary data returned by the API
 interface DailySummaryResult {
   date: string;
   totalTransactionsCount: number;
-  totalMoneyIn: number; // Sum of stock_out totalAmount (Sales Revenue)
-  totalMoneyOut: number; // Sum of stock_in totalAmount (Purchase Cost)
-  netFlow: number; // totalMoneyIn - totalMoneyOut
-  grossProfitFromSales: number; // (sellPrice - buyPrice) * quantity for stock_out where sellPrice > buyPrice
-  lossFromBelowCostSales: number; // (buyPrice - sellPrice) * quantity for stock_out where sellPrice < buyPrice
+  totalMoneyIn: number;
+  totalMoneyOut: number;
+  netFlow: number;
+  grossProfitFromSales: number;
+  lossFromBelowCostSales: number;
 }
 
 const transactionTypeConfig = {
   stock_in: {
     label: "Stock In (Purchase)",
     icon: TrendingUp,
-    variant: "success" as const, // This variant is for the badge color, not financial impact text
+    variant: "success" as const,
     description: "Items added to inventory",
   },
   stock_out: {
     label: "Stock Out (Sale)",
     icon: TrendingDown,
-    variant: "destructive" as const, // This variant is for the badge color, not financial impact text
+    variant: "destructive" as const,
     description: "Items removed from inventory",
   },
   adjustment: {
@@ -156,11 +155,10 @@ export default function TransactionsPage() {
     );
   }, [transactions, typeFilter, itemFilter, dateFilter]);
 
-  // Calculate transaction stats for summary cards (based on current filters)
   const transactionStats = useMemo(() => {
     const totalTransactions = filteredTransactions.length;
-    let totalStockInValue = 0; // Cost of goods bought (Total Purchases)
-    let totalStockOutValue = 0; // Revenue from goods sold (Total Sales Revenue)
+    let totalStockInValue = 0;
+    let totalStockOutValue = 0;
     let totalGrossProfit = 0;
     let totalLossSales = 0;
 
@@ -171,25 +169,23 @@ export default function TransactionsPage() {
         totalStockOutValue += t.totalAmount;
         const soldItem = inventory.find((item) => item.id === t.itemId);
         if (soldItem) {
-          // Profit is calculated as (Sale Price - Buy Price) * Quantity
           const profit = (t.unitPrice - soldItem.buyPrice) * t.quantity;
           if (profit > 0) {
             totalGrossProfit += profit;
           } else {
-            totalLossSales += Math.abs(profit); // Abs value of negative profit is loss
+            totalLossSales += Math.abs(profit);
           }
         }
       }
     });
 
-    // Net flow is typically Sales Revenue - Purchase Cost
     const netFlow = totalStockOutValue - totalStockInValue;
 
     return {
       totalTransactions,
-      totalStockInValue, // Total Cost of Purchases
-      totalStockOutValue, // Total Revenue from Sales
-      netFlow, // Net money movement
+      totalStockInValue,
+      totalStockOutValue,
+      netFlow,
       totalGrossProfit,
       totalLossSales,
     };
@@ -208,10 +204,11 @@ export default function TransactionsPage() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           try {
             const importedData = JSON.parse(e.target?.result as string);
-            if (importData(importedData)) {
+            const success = await importData(importedData);
+            if (success) {
               alert("Data imported successfully!");
             } else {
               alert("Invalid file format");
@@ -229,17 +226,15 @@ export default function TransactionsPage() {
   const hasActiveFilters =
     typeFilter !== "all" || dateFilter !== "all" || itemFilter !== "all";
 
-  // --- PDF Download Function ---
   const handleDownloadPdfSummary = async (period: string) => {
     try {
-      // The API is designed to return an aggregated summary for 'week', 'month', 'quarter', 'today'
       const response = await fetch(`/api/daily-summaries?range=${period}`);
       if (!response.ok) {
         throw new Error(
           `Error fetching ${period} summary: ${response.statusText}`
         );
       }
-      const summaryData: DailySummaryResult = await response.json(); // API returns a single aggregated/daily summary object
+      const summaryData: DailySummaryResult = await response.json();
 
       if (!summaryData || summaryData.totalTransactionsCount === 0) {
         alert(
@@ -278,10 +273,10 @@ export default function TransactionsPage() {
       const addMetric = (label: string, value: number, color?: string) => {
         doc.setFontSize(14);
         doc.text(label, 20, yOffset);
-        doc.setTextColor(color || "#000000"); // Default to black
+        doc.setTextColor(color || "#000000");
         doc.setFont("helvetica", "bold");
         doc.text(formatCurrency(value), 190, yOffset, { align: "right" });
-        doc.setTextColor("#000000"); // Reset color
+        doc.setTextColor("#000000");
         doc.setFont("helvetica", "normal");
         yOffset += 8;
       };
@@ -294,31 +289,28 @@ export default function TransactionsPage() {
       );
       yOffset += 15;
 
-      // Money earned (Sales Revenue) - Green
       addMetric(
         "Money we earned (Sales Revenue):",
         summaryData.totalMoneyIn,
-        "#22C55E" // Green
+        "#22C55E"
       );
-      // Money spent (Purchase Cost) - Blue
       addMetric(
         "Money we spent (Purchase Cost):",
         summaryData.totalMoneyOut,
-        "#3B82F6" // Blue
+        "#3B82F6"
       );
 
       yOffset += 10;
 
-      // Overall Net Flow - Green for profit, Red for loss, Gray for break-even
-      let netFlowColor = "#6B7280"; // Gray
+      let netFlowColor = "#6B7280";
       let netFlowEmoji = "😐";
       let netFlowText = "You broke even!";
       if (summaryData.netFlow > 0) {
-        netFlowColor = "#10B981"; // Stronger Green
+        netFlowColor = "#10B981";
         netFlowEmoji = "💰";
         netFlowText = "Great job! You made money!";
       } else if (summaryData.netFlow < 0) {
-        netFlowColor = "#EF4444"; // Red
+        netFlowColor = "#EF4444";
         netFlowEmoji = "💸";
         netFlowText = "Oops! You spent more than you earned.";
       }
@@ -335,18 +327,16 @@ export default function TransactionsPage() {
       );
       doc.setFontSize(12);
       doc.text(netFlowText, 20, yOffset + 7);
-      doc.setTextColor("#000000"); // Reset color
+      doc.setTextColor("#000000");
       doc.setFont("helvetica", "normal");
       yOffset += 20;
 
-      // Profit from good sales - Green
       doc.setFontSize(14);
       addMetric(
         "Profit from good sales:",
         summaryData.grossProfitFromSales,
         "#22C55E"
       );
-      // Loss from tricky sales - Red
       addMetric(
         "Loss from tricky sales:",
         summaryData.lossFromBelowCostSales,
@@ -368,9 +358,11 @@ export default function TransactionsPage() {
         }.pdf`
       );
       alert(`Downloaded ${period} summary PDF.`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Download summary error:", error);
-      alert(`Failed to download ${period} summary: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      alert(`Failed to download ${period} summary: ${errorMessage}`);
     }
   };
 

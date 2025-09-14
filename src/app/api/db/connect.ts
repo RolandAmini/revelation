@@ -1,7 +1,15 @@
-// src/app/api/db/connect.ts
 import mongoose from "mongoose";
 
-// Ensure the MONGODB_URI environment variable is set
+// Type declaration for global mongoose caching
+declare global {
+  var _mongoose:
+    | {
+        conn: mongoose.Connection | null;
+        promise: Promise<mongoose.Connection> | null;
+      }
+    | undefined;
+}
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
@@ -12,48 +20,45 @@ if (!MONGODB_URI) {
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
+ * in development. This prevents connections from growing exponentially
  * during API Route usage.
  */
-let cached = globalWithMongoose._mongoose;
+let cached = global._mongoose;
 
 if (!cached) {
-  cached = globalWithMongoose._mongoose = { conn: null, promise: null };
+  cached = global._mongoose = { conn: null, promise: null };
 }
 
-// Extend the global object with a Mongoose cache
-interface CustomNodeJsGlobal extends NodeJS.Global {
-  _mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  };
-}
-declare const globalWithMongoose: CustomNodeJsGlobal;
-
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
+async function connectToDatabase(): Promise<mongoose.Connection> {
+  if (cached!.conn) {
+    return cached!.conn;
   }
 
-  if (!cached.promise) {
+  if (!cached!.promise) {
     const opts = {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose
+    cached!.promise = mongoose
       .connect(MONGODB_URI!, opts)
       .then((mongoose) => {
-        console.log("MongoDB connected successfully.");
-        return mongoose;
+        console.log("✅ Connected to MongoDB");
+        return mongoose.connection;
       })
-      .catch((err) => {
-        console.error("MongoDB connection failed:", err);
-        cached.promise = null; // Reset promise on failure
-        throw err;
+      .catch((error) => {
+        console.error("❌ MongoDB connection error:", error);
+        throw error;
       });
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+
+  try {
+    cached!.conn = await cached!.promise;
+  } catch (e) {
+    cached!.promise = null;
+    throw e;
+  }
+
+  return cached!.conn;
 }
 
-export default dbConnect;
+export default connectToDatabase;
