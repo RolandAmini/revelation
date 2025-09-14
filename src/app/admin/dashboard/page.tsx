@@ -1,7 +1,6 @@
-// pages/dashboard.tsx
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Plus,
   Package,
@@ -21,7 +20,6 @@ import { useInventory } from "@/lib/hooks/use-inventory";
 import { InventoryItem } from "@/lib/types/inventory";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
 
-// Helper function to map your internal status variants to shadcn/ui's Badge variants
 const mapStatusToBadgeVariant = (statusVariant: string) => {
   switch (statusVariant) {
     case "success":
@@ -41,6 +39,21 @@ const mapStatusToBadgeVariant = (statusVariant: string) => {
   }
 };
 
+interface ReceiptData {
+  type: "sale";
+  items: {
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }[];
+  subtotal: number;
+  total: number;
+  customerInfo: { name: string; phone: string };
+  receiptNumber: string;
+  date: string;
+}
+
 const SIDEBAR_WIDTH_CLASS = "w-64";
 
 export default function DashboardPage() {
@@ -52,19 +65,16 @@ export default function DashboardPage() {
     useState<InventoryItem | null>(null);
 
   const [showReceiptDisplay, setShowReceiptDisplay] = useState(false);
-  const [receiptDataToDisplay, setReceiptDataToDisplay] = useState<any | null>(
-    null
-  );
+  const [receiptDataToDisplay, setReceiptDataToDisplay] =
+    useState<ReceiptData | null>(null);
 
   const {
     inventory,
-    loading,
     stats,
     addItem,
     recordTransaction,
     exportData,
     importData,
-    transactions,
   } = useInventory();
 
   const categories = useMemo(
@@ -73,12 +83,9 @@ export default function DashboardPage() {
   );
 
   const handleAddItem = (
-    itemData: Omit<InventoryItem, "id" | "createdAt" | "updatedAt"> & {
-      id?: string;
-    }
+    itemData: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">
   ) => {
-    const { id, ...newItemData } = itemData; // 'id' will be undefined for new items
-    addItem(newItemData);
+    addItem(itemData);
     setShowAddForm(false);
   };
 
@@ -125,7 +132,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const receipt = {
+      const receipt: ReceiptData = {
         type: "sale",
         items: [
           {
@@ -158,16 +165,17 @@ export default function DashboardPage() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (event) => {
           try {
-            const importedData = JSON.parse(e.target?.result as string);
-            if (importData(importedData)) {
+            const importedData = JSON.parse(event.target?.result as string);
+            const success = await importData(importedData);
+            if (success) {
               alert("Data imported successfully!");
             } else {
-              alert("Invalid file format");
+              alert("Invalid file format or failed import.");
             }
-          } catch (error) {
-            alert("Error reading file");
+          } catch {
+            alert("Error reading or parsing file.");
           }
         };
         reader.readAsText(file);
@@ -182,7 +190,6 @@ export default function DashboardPage() {
   const outOfStockItems = inventory.filter((item) => item.currentStock === 0);
 
   return (
-    // Apply dark mode class to the main container, and use bg-background for dynamic styling
     <div className={`min-h-screen bg-background ${darkMode ? "dark" : ""}`}>
       <Navbar
         sidebarOpen={sidebarOpen}
@@ -203,7 +210,6 @@ export default function DashboardPage() {
           } lg:translate-x-0`}
         />
 
-        {/* Main Content - now uses bg-background for consistency */}
         <main
           className={`flex-1 overflow-y-auto bg-background transition-all duration-300 ease-in-out
                       ${

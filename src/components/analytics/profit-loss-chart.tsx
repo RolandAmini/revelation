@@ -39,6 +39,17 @@ interface ChartDataPoint {
   transactions: number;
 }
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    color: string;
+    name: string;
+    value: number;
+    dataKey: string;
+  }>;
+  label?: string;
+}
+
 export default function ProfitLossChart({
   transactions,
   inventory,
@@ -165,12 +176,12 @@ export default function ProfitLossChart({
     );
   }, [chartData]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border rounded-lg shadow-lg p-3">
           <p className="font-semibold">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
               {entry.name}:{" "}
               {entry.dataKey === "margin"
@@ -360,7 +371,9 @@ export default function ProfitLossChart({
             <div className="flex gap-2">
               <Select
                 value={period}
-                onChange={(e) => onPeriodChange(e.target.value as any)}
+                onValueChange={(value: string) =>
+                  onPeriodChange(value as "week" | "month" | "quarter" | "year")
+                }
               >
                 <option value="week">Past Week</option>
                 <option value="month">Past Month</option>
@@ -369,7 +382,9 @@ export default function ProfitLossChart({
               </Select>
               <Select
                 value={chartType}
-                onChange={(e) => setChartType(e.target.value as any)}
+                onValueChange={(value: string) =>
+                  setChartType(value as "line" | "area" | "bar")
+                }
               >
                 <option value="line">Line Chart</option>
                 <option value="area">Area Chart</option>

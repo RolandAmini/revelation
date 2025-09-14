@@ -1,33 +1,32 @@
-// src/app/api/export/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "@/app/api/db/connect";
 import Inventory from "@/models/Inventory";
 import Transaction from "@/models/Transaction";
 import { InventoryItem, StockTransaction } from "@/lib/types/inventory";
-
-// GET /api/export - Export all inventory and transaction data
 export async function GET() {
   await dbConnect();
   try {
-    const inventory = await Inventory.find({}).lean(); // .lean() for plain JS objects
-    const transactions = await Transaction.find({}).lean(); // .lean() for plain JS objects
-
+    const inventory = await Inventory.find({}).lean();
+    const transactions = await Transaction.find({}).lean();
     const data: {
       inventory: InventoryItem[];
       transactions: StockTransaction[];
       exportDate: string;
     } = {
-      inventory: inventory as InventoryItem[], // Cast to match frontend type
-      transactions: transactions as StockTransaction[], // Cast to match frontend type
+      inventory: inventory as InventoryItem[],
+      transactions: transactions as StockTransaction[],
       exportDate: new Date().toISOString(),
     };
 
-    // Return JSON data. Frontend will handle the download.
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Error exporting data:", error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
+
     return NextResponse.json(
-      { message: "Failed to export data", error: error.message },
+      { message: "Failed to export data", error: errorMessage },
       { status: 500 }
     );
   }

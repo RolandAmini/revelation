@@ -1,4 +1,3 @@
-// src/app/transactions/page.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -8,8 +7,6 @@ import {
   RefreshCw,
   XCircle,
   Download,
-  ArrowRightLeft,
-  // REMOVED: Calendar, DollarSign - no longer used in the simplified cards
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +35,6 @@ import {
   formatDate,
   mapStatusToBadgeVariant,
 } from "@/lib/utils";
-import { InventoryItem } from "@/lib/types/inventory";
 import jsPDF from "jspdf";
 import autoTable, { UserOptions } from "jspdf-autotable";
 

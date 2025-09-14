@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
+import { InventoryItem } from "@/lib/types/inventory";
 
 interface QuickSaleFormProps {
-  item: any;
+  item: InventoryItem;
   onSale: (
     itemId: string,
     quantity: number,
@@ -32,17 +33,24 @@ export default function QuickSaleForm({
 
   const handleCompleteSale = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!item.id) {
+      alert("Error: Cannot perform sale on an item without an ID.");
+      return;
+    }
     if (isFormValid) {
-      onSale(item.id, quantity, salePrice, customerInfo, false); // Pass false for receipt
-      onClose();
+      onSale(item.id, quantity, salePrice, customerInfo, false);
     }
   };
 
   const handleCompleteSaleAndPrint = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!item.id) {
+      alert("Error: Cannot perform sale on an item without an ID.");
+      return;
+    }
+
     if (isFormValid) {
-      onSale(item.id, quantity, salePrice, customerInfo, true); // Pass true for receipt
-      onClose();
+      onSale(item.id, quantity, salePrice, customerInfo, true);
     }
   };
 

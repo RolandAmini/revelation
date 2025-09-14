@@ -5,11 +5,15 @@ import Inventory from "@/models/Inventory";
 import Transaction from "@/models/Transaction";
 import { InventoryItem, StockTransaction } from "@/lib/types/inventory";
 
-// POST /api/import - Import inventory and transaction data
+interface ImportData {
+  inventory: InventoryItem[];
+  transactions: StockTransaction[];
+}
+
 export async function POST(req: Request) {
   await dbConnect();
   try {
-    const { inventory, transactions } = await req.json();
+    const { inventory, transactions } = (await req.json()) as ImportData;
 
     if (!Array.isArray(inventory) || !Array.isArray(transactions)) {
       return NextResponse.json(
@@ -17,14 +21,9 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    // Clear existing data (use with caution in production!)
     await Inventory.deleteMany({});
     await Transaction.deleteMany({});
-
-    // Insert new data
-    // Ensure IDs are retained or new ones generated based on import strategy
-    const importedInventory = await Inventory.insertMany(
+    await Inventory.insertMany(
       inventory.map((item) => ({
         ...item,
         _id: item.id, // Mongoose will use this as _id
@@ -33,19 +32,27 @@ export async function POST(req: Request) {
       }))
     );
 
-    const importedTransactions = await Transaction.insertMany(
+    await Transaction.insertMany(
       transactions.map((transaction) => ({
         ...transaction,
-        _id: transaction.id, // Mongoose will use this as _id
+        _id: transaction.id,
         createdAt: transaction.createdAt || new Date().toISOString(),
       }))
     );
 
-    return new Response(null, { status: 200 }); // OK, data imported
-  } catch (error: any) {
-    console.error("API Error importing data:", error);
+    // Use NextResponse for consistent API responses
     return NextResponse.json(
-      { message: "Failed to import data", error: error.message },
+      { message: "Data imported successfully" },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error("API Error importing data:", error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
+
+    return NextResponse.json(
+      { message: "Failed to import data", error: errorMessage },
       { status: 500 }
     );
   }

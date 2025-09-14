@@ -1,11 +1,9 @@
-// src/app/api/inventory/[id]/route.ts
 import { NextResponse } from "next/server";
-import dbConnect from "@/app/api/db/connect"; // Import DB connection
-import Inventory from "@/models/Inventory"; // Import Inventory Model
-import Transaction from "@/models/Transaction"; // Import Transaction Model to delete associated transactions
+import dbConnect from "@/app/api/db/connect";
+import Inventory from "@/models/Inventory";
+import Transaction from "@/models/Transaction";
 import { InventoryItem } from "@/lib/types/inventory"; // For typing
 
-// GET /api/inventory/:id - Fetch a single inventory item
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -19,16 +17,17 @@ export async function GET(
       return NextResponse.json({ message: "Item not found" }, { status: 404 });
     }
     return NextResponse.json(item);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Error fetching item:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Failed to fetch item", error: error.message },
+      { message: "Failed to fetch item", error: errorMessage },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/inventory/:id - Update an inventory item
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
@@ -40,8 +39,8 @@ export async function PUT(
 
     const updatedItem = await Inventory.findByIdAndUpdate(
       id,
-      { ...updates, updatedAt: new Date().toISOString() }, // Update updatedAt
-      { new: true, runValidators: true } // Return the updated document, run schema validators
+      { ...updates, updatedAt: new Date().toISOString() },
+      { new: true, runValidators: true }
     );
 
     if (!updatedItem) {
@@ -49,16 +48,17 @@ export async function PUT(
     }
 
     return NextResponse.json(updatedItem);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Error updating item:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Failed to update item", error: error.message },
+      { message: "Failed to update item", error: errorMessage },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/inventory/:id - Delete an inventory item
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
@@ -66,21 +66,21 @@ export async function DELETE(
   await dbConnect();
   try {
     const { id } = params;
-
     const deletedItem = await Inventory.findByIdAndDelete(id);
 
     if (!deletedItem) {
       return NextResponse.json({ message: "Item not found" }, { status: 404 });
     }
 
-    // Also delete associated transactions for this item
     await Transaction.deleteMany({ itemId: id });
 
-    return new Response(null, { status: 204 }); // No Content
-  } catch (error: any) {
+    return new Response(null, { status: 204 });
+  } catch (error: unknown) {
     console.error("API Error deleting item:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Failed to delete item", error: error.message },
+      { message: "Failed to delete item", error: errorMessage },
       { status: 500 }
     );
   }

@@ -1,28 +1,40 @@
-// src/app/api/stats/route.ts
 import { NextResponse } from "next/server";
-import dbConnect from "@/app/api/db/connect"; // Import DB connection
-import Inventory from "@/models/Inventory"; // Import Inventory Model
-import Transaction from "@/models/Transaction"; // Import Transaction Model
-import { InventoryStats } from "@/lib/types/inventory"; // For typing
-import { calculateProfit } from "@/lib/utils"; // For calculation
+import dbConnect from "@/app/api/db/connect";
+import Inventory from "@/models/Inventory";
+import Transaction from "@/models/Transaction";
+import {
+  InventoryStats,
+  InventoryItem,
+  StockTransaction,
+} from "@/lib/types/inventory";
 
-// GET /api/stats - Calculate and return inventory statistics
+interface InventoryDocument extends Omit<InventoryItem, "id"> {
+  _id: { toString: () => string };
+}
+
 export async function GET() {
   await dbConnect();
   try {
-    const inventory = await Inventory.find({});
-    const transactions = await Transaction.find({});
+    const inventoryDocs = await Inventory.find({}).lean();
+    const transactions = (await Transaction.find({
+      type: "stock_out",
+    }).lean()) as StockTransaction[];
+
+    const inventory: InventoryItem[] = (
+      inventoryDocs as InventoryDocument[]
+    ).map((doc) => ({
+      id: doc._id.toString(),
+      ...doc,
+    }));
 
     const totalItems = inventory.length;
     const totalValue = inventory.reduce(
       (sum, item) => sum + item.currentStock * item.buyPrice,
       0
     );
-
     const lowStockItems = inventory.filter(
       (item) => item.currentStock > 0 && item.currentStock <= item.minStockLevel
     ).length;
-
     const outOfStockItems = inventory.filter(
       (item) => item.currentStock === 0
     ).length;
@@ -32,52 +44,38 @@ export async function GET() {
     let monthlyProfit = 0;
     let monthlyLoss = 0;
 
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
-    // Create a lookup for inventory items by ID for efficient profit calculation
-    const inventoryLookup: Record<string, InventoryItem> = inventory.reduce(
-      (acc, item) => {
-        if (item.id) acc[item.id] = item.toObject(); // Use .toObject() to get a plain JS object
-        return acc;
-      },
-      {}
-    );
+    const inventoryLookup = new Map(inventory.map((item) => [item.id, item]));
 
-    transactions.forEach((transaction) => {
-      const item = inventoryLookup[transaction.itemId];
-      if (!item) return;
+    for (const transaction of transactions) {
+      const item = inventoryLookup.get(transaction.itemId);
+      if (!item) {
+        continue;
+      }
+
+      const profitAmount =
+        (transaction.unitPrice - item.buyPrice) * transaction.quantity;
 
       const transactionDate = new Date(transaction.createdAt);
-      const profitAmount = calculateProfit(
-        transaction.type === "stock_out"
-          ? transaction.unitPrice
-          : item.sellPrice, // Use transaction's unitPrice for stock_out
-        item.buyPrice, // Use item's current buy price
-        transaction.quantity
-      );
+      const isThisMonth =
+        transactionDate.getMonth() === currentMonth &&
+        transactionDate.getFullYear() === currentYear;
 
-      if (transaction.type === "stock_out") {
-        if (profitAmount > 0) {
-          totalProfit += profitAmount;
-          if (
-            transactionDate.getMonth() === currentMonth &&
-            transactionDate.getFullYear() === currentYear
-          ) {
-            monthlyProfit += profitAmount;
-          }
-        } else {
-          // Profit is 0 or negative
-          totalLoss += Math.abs(profitAmount);
-          if (
-            transactionDate.getMonth() === currentMonth &&
-            transactionDate.getFullYear() === currentYear
-          ) {
-            monthlyLoss += Math.abs(profitAmount);
-          }
+      if (profitAmount > 0) {
+        totalProfit += profitAmount;
+        if (isThisMonth) {
+          monthlyProfit += profitAmount;
+        }
+      } else {
+        totalLoss += Math.abs(profitAmount);
+        if (isThisMonth) {
+          monthlyLoss += Math.abs(profitAmount);
         }
       }
-    });
+    }
 
     const stats: InventoryStats = {
       totalItems,
@@ -91,10 +89,12 @@ export async function GET() {
     };
 
     return NextResponse.json(stats);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Error calculating stats:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Failed to fetch stats", error: error.message },
+      { message: "Failed to fetch stats", error: errorMessage },
       { status: 500 }
     );
   }
