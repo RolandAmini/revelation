@@ -4,7 +4,6 @@ import React from "react";
 import { Search, Filter, X, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// IMPORTANT: Make sure you have shadcn/ui's Select, SelectTrigger, SelectContent, SelectItem, SelectValue
 import {
   Select,
   SelectTrigger,

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -114,7 +113,10 @@ export default function StockTransactionForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!item) return;
+    if (!item || !item.id) {
+      console.error("Item or item ID is missing");
+      return;
+    }
 
     const validation = validateStockTransaction({
       quantity: formData.quantity,

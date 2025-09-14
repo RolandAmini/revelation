@@ -124,7 +124,10 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium">{item.name}</h4>
-                        <Badge variant="warning" className="text-xs">
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-yellow-500 text-yellow-700"
+                        >
                           {item.currentStock} left
                         </Badge>
                       </div>

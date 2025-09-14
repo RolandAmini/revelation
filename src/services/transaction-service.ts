@@ -2,16 +2,14 @@ import {
   Transaction,
   TransactionFilter,
   TransactionSummary,
-} from "@/lib/types/transactions";
-import { InventoryItem } from "@/lib/types/inventory";
-import { generateId } from "@/lib/utils";
+  InventoryItem,
+} from "@/lib/types/inventory";
 
 export class TransactionService {
   private static TRANSACTIONS_KEY = "inventory_transactions_v2";
 
   static getTransactions(): Transaction[] {
     if (typeof window === "undefined") return [];
-
     try {
       const data = localStorage.getItem(this.TRANSACTIONS_KEY);
       return data ? JSON.parse(data) : [];
@@ -23,7 +21,6 @@ export class TransactionService {
 
   static saveTransactions(transactions: Transaction[]): void {
     if (typeof window === "undefined") return;
-
     try {
       localStorage.setItem(this.TRANSACTIONS_KEY, JSON.stringify(transactions));
     } catch (error) {
@@ -37,7 +34,8 @@ export class TransactionService {
   ): Transaction {
     return {
       ...transactionData,
-      id: generateId(),
+      // FIXED: Replaced generateId() with the modern, browser-native crypto.randomUUID()
+      id: crypto.randomUUID(),
       itemId,
       createdAt: new Date().toISOString(),
     };
@@ -48,7 +46,6 @@ export class TransactionService {
     filter: TransactionFilter
   ): Transaction[] {
     return transactions.filter((transaction) => {
-      // Type filter
       if (
         filter.type &&
         filter.type !== "all" &&
@@ -56,8 +53,6 @@ export class TransactionService {
       ) {
         return false;
       }
-
-      // Item filter
       if (
         filter.itemId &&
         filter.itemId !== "all" &&
@@ -65,37 +60,28 @@ export class TransactionService {
       ) {
         return false;
       }
-
-      // Date range filter
       if (filter.dateRange) {
         const transactionDate = new Date(transaction.createdAt);
         const startDate = new Date(filter.dateRange.start);
         const endDate = new Date(filter.dateRange.end);
-
         if (transactionDate < startDate || transactionDate > endDate) {
           return false;
         }
       }
-
-      // Amount filters
       if (filter.minAmount && transaction.totalAmount < filter.minAmount) {
         return false;
       }
       if (filter.maxAmount && transaction.totalAmount > filter.maxAmount) {
         return false;
       }
-
-      // Reference filter
       if (filter.reference) {
         const searchTerm = filter.reference.toLowerCase();
+        // FIXED: Removed reference to 'invoiceNumber' which does not exist on the type.
         const hasMatch =
           transaction.reference?.toLowerCase().includes(searchTerm) ||
-          transaction.invoiceNumber?.toLowerCase().includes(searchTerm) ||
           transaction.notes?.toLowerCase().includes(searchTerm);
-
         if (!hasMatch) return false;
       }
-
       return true;
     });
   }
@@ -107,19 +93,17 @@ export class TransactionService {
     const summary = transactions.reduce(
       (acc, transaction) => {
         acc.totalTransactions++;
-
         switch (transaction.type) {
-          case "purchase":
+          case "stock_in":
             acc.totalPurchaseValue += transaction.totalAmount;
             break;
-          case "sale":
+          case "stock_out":
             acc.totalSaleValue += transaction.totalAmount;
             break;
           case "adjustment":
             acc.totalAdjustments++;
             break;
         }
-
         return acc;
       },
       {
@@ -131,10 +115,12 @@ export class TransactionService {
     );
 
     const netCashFlow = summary.totalSaleValue - summary.totalPurchaseValue;
-    const profitMargin =
-      summary.totalSaleValue > 0
-        ? (netCashFlow / summary.totalSaleValue) * 100
-        : 0;
+    const grossProfit = transactions
+      .filter((t) => t.type === "stock_out")
+      .reduce((sum, t) => {
+        const item = inventory.find((i) => i.id === t.itemId);
+        return item ? sum + (t.unitPrice - item.buyPrice) * t.quantity : sum;
+      }, 0);
 
     const dates = transactions.map((t) => t.createdAt).sort();
     const period = {
@@ -145,7 +131,7 @@ export class TransactionService {
     return {
       ...summary,
       netCashFlow,
-      profitMargin,
+      grossProfit,
       period,
     };
   }
@@ -154,7 +140,7 @@ export class TransactionService {
     transactions: Transaction[],
     limit: number = 10
   ): Transaction[] {
-    return transactions
+    return [...transactions]
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -181,7 +167,6 @@ export class TransactionService {
   ): Transaction[] {
     const start = new Date(startDate);
     const end = new Date(endDate);
-
     return transactions.filter((transaction) => {
       const transactionDate = new Date(transaction.createdAt);
       return transactionDate >= start && transactionDate <= end;
@@ -197,8 +182,8 @@ export class TransactionService {
       return {
         ...transaction,
         itemName: item?.name || "Unknown Item",
-        itemSKU: item?.sku || "Unknown SKU",
-        itemCategory: item?.category || "Unknown Category",
+        itemSKU: item?.sku || "N/A",
+        itemCategory: item?.category || "N/A",
       };
     });
 
@@ -206,7 +191,6 @@ export class TransactionService {
       transactions: enrichedTransactions,
       summary: this.calculateSummary(transactions, inventory),
       exportDate: new Date().toISOString(),
-      totalTransactions: transactions.length,
     };
 
     const dataStr = JSON.stringify(data, null, 2);
@@ -219,7 +203,9 @@ export class TransactionService {
     const linkElement = document.createElement("a");
     linkElement.setAttribute("href", dataUri);
     linkElement.setAttribute("download", exportFileDefaultName);
+    document.body.appendChild(linkElement);
     linkElement.click();
+    document.body.removeChild(linkElement);
   }
 
   static validateTransaction(transaction: Partial<Transaction>): {
@@ -227,23 +213,12 @@ export class TransactionService {
     errors: Record<string, string>;
   } {
     const errors: Record<string, string> = {};
-
-    if (!transaction.itemId) {
-      errors.itemId = "Item is required";
-    }
-
-    if (!transaction.type) {
-      errors.type = "Transaction type is required";
-    }
-
-    if (!transaction.quantity || transaction.quantity <= 0) {
+    if (!transaction.itemId) errors.itemId = "Item is required";
+    if (!transaction.type) errors.type = "Transaction type is required";
+    if (!transaction.quantity || transaction.quantity <= 0)
       errors.quantity = "Quantity must be greater than 0";
-    }
-
-    if (!transaction.unitPrice || transaction.unitPrice <= 0) {
-      errors.unitPrice = "Unit price must be greater than 0";
-    }
-
+    if (transaction.unitPrice === undefined || transaction.unitPrice < 0)
+      errors.unitPrice = "Unit price must be 0 or greater";
     return {
       isValid: Object.keys(errors).length === 0,
       errors,

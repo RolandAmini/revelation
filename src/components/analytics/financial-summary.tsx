@@ -39,7 +39,7 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
       icon: TrendingUp,
       description: "All-time profits",
       trend: stats.totalProfit > 0 ? "positive" : "neutral",
-      color: "text-success",
+      color: "text-green-600",
     },
     {
       title: "Total Loss",
@@ -47,7 +47,7 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
       icon: TrendingDown,
       description: "All-time losses",
       trend: stats.totalLoss > 0 ? "negative" : "neutral",
-      color: "text-destructive",
+      color: "text-red-600",
     },
     {
       title: "Net Profit",
@@ -58,9 +58,9 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
         netProfit > 0 ? "positive" : netProfit < 0 ? "negative" : "neutral",
       color:
         netProfit > 0
-          ? "text-success"
+          ? "text-green-600"
           : netProfit < 0
-          ? "text-destructive"
+          ? "text-red-600"
           : "text-muted-foreground",
     },
     {
@@ -69,7 +69,7 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
       icon: Calendar,
       description: "This month's profits",
       trend: stats.monthlyProfit > 0 ? "positive" : "neutral",
-      color: "text-success",
+      color: "text-green-600",
     },
     {
       title: "Profit Margin",
@@ -84,10 +84,10 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
           : "negative",
       color:
         profitMargin > 20
-          ? "text-success"
+          ? "text-green-600"
           : profitMargin > 10
-          ? "text-warning"
-          : "text-destructive",
+          ? "text-yellow-600"
+          : "text-red-600",
     },
   ];
 
@@ -118,12 +118,16 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
                     <Badge
                       variant={
                         card.trend === "positive"
-                          ? "success"
+                          ? "default"
                           : card.trend === "negative"
                           ? "destructive"
                           : "secondary"
                       }
-                      className="text-xs"
+                      className={`text-xs ${
+                        card.trend === "positive"
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : ""
+                      }`}
                     >
                       {card.trend === "positive"
                         ? "↗"
@@ -144,7 +148,7 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-success" />
+              <TrendingUp className="h-5 w-5 text-green-600" />
               Profit Analysis
             </CardTitle>
           </CardHeader>
@@ -153,13 +157,13 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
               <span className="text-sm text-muted-foreground">
                 All-time Profit
               </span>
-              <span className="font-semibold text-success">
+              <span className="font-semibold text-green-600">
                 {formatCurrency(stats.totalProfit)}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">This Month</span>
-              <span className="font-semibold text-success">
+              <span className="font-semibold text-green-600">
                 {formatCurrency(stats.monthlyProfit)}
               </span>
             </div>
@@ -167,7 +171,14 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
               <span className="text-sm text-muted-foreground">
                 Monthly Growth
               </span>
-              <Badge variant={monthlyNet > 0 ? "success" : "destructive"}>
+              <Badge
+                variant={monthlyNet > 0 ? "default" : "destructive"}
+                className={
+                  monthlyNet > 0
+                    ? "bg-green-100 text-green-800 hover:bg-green-200"
+                    : ""
+                }
+              >
                 {monthlyNet > 0 ? "+" : ""}
                 {formatCurrency(monthlyNet)}
               </Badge>
@@ -191,7 +202,14 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
               <span className="text-sm text-muted-foreground">
                 Low Stock Items
               </span>
-              <Badge variant={stats.lowStockItems > 0 ? "warning" : "success"}>
+              <Badge
+                variant={stats.lowStockItems > 0 ? "outline" : "default"}
+                className={
+                  stats.lowStockItems > 0
+                    ? "border-yellow-500 text-yellow-700"
+                    : "bg-green-100 text-green-800 hover:bg-green-200"
+                }
+              >
                 {stats.lowStockItems}
               </Badge>
             </div>
@@ -200,7 +218,12 @@ export default function FinancialSummary({ stats }: FinancialSummaryProps) {
                 Out of Stock
               </span>
               <Badge
-                variant={stats.outOfStockItems > 0 ? "destructive" : "success"}
+                variant={stats.outOfStockItems > 0 ? "destructive" : "default"}
+                className={
+                  stats.outOfStockItems === 0
+                    ? "bg-green-100 text-green-800 hover:bg-green-200"
+                    : ""
+                }
               >
                 {stats.outOfStockItems}
               </Badge>

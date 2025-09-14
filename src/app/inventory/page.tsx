@@ -22,7 +22,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 import { useInventory } from "@/lib/hooks/use-inventory";
-import { InventoryItem } from "@/lib/types/inventory";
+import {
+  InventoryItem,
+  CreateInventoryItemData,
+  UpdateInventoryItemData,
+} from "@/lib/types/inventory";
 import { getStockStatus, formatCurrency, formatDate } from "@/lib/utils";
 
 // Helper function to map your internal status variants to shadcn/ui's Badge variants
@@ -125,28 +129,19 @@ export default function InventoryPage() {
     setShowEditItem(true);
   };
 
-  const handleAddItemSubmit = (
-    // Renamed to differentiate from handleUpdateItem
-    itemData: Omit<InventoryItem, "createdAt" | "updatedAt"> & { id?: string }
-  ) => {
-    const { id, ...newItemData } = itemData; // Ensure ID is not passed for new items
-    addItem(newItemData);
+  const handleAddItemSubmit = (itemData: CreateInventoryItemData) => {
+    addItem(itemData);
     setShowAddItem(false);
   };
 
   const handleUpdateItem = async (
-    itemData: Omit<InventoryItem, "createdAt" | "updatedAt"> & { id?: string }
+    id: string,
+    itemData: UpdateInventoryItemData
   ) => {
-    if (itemData.id) {
-      const { id, ...updateFields } = itemData;
-      await updateItem(id, updateFields);
-      setShowEditItem(false);
-      setItemToEdit(null);
-      alert(`Item "${updateFields.name}" updated successfully!`);
-    } else {
-      console.error("Attempted to update item without a valid ID.");
-      alert("Failed to update item: Missing item ID.");
-    }
+    await updateItem(id, itemData);
+    setShowEditItem(false);
+    setItemToEdit(null);
+    alert(`Item "${itemData.name || "Item"}" updated successfully!`);
   };
 
   const handleDelete = async (item: InventoryItem) => {
@@ -292,7 +287,11 @@ export default function InventoryPage() {
       <AddItemForm
         open={showEditItem}
         onOpenChange={setShowEditItem}
-        onSubmit={handleUpdateItem}
+        onSubmit={(data) => {
+          if (itemToEdit?.id) {
+            handleUpdateItem(itemToEdit.id, data);
+          }
+        }}
         categories={categories}
         itemToEdit={itemToEdit}
       />

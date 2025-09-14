@@ -40,14 +40,15 @@ const DailySummarySchema: Schema<DailySummaryDocument> = new Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = ret._id; // _id is already the date string we want
-        delete ret.__v;
+        const { __v, ...cleanRet } = ret;
+        return { ...cleanRet, id: ret._id };
       },
     },
     toObject: {
       virtuals: true,
       transform: (doc, ret) => {
-        ret.id = ret._id;
-        delete ret.__v;
+        const { __v, ...cleanRet } = ret;
+        return { ...cleanRet, id: ret._id };
       },
     },
   }
