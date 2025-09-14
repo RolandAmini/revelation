@@ -150,10 +150,11 @@ export default function AnalyticsPage() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           try {
             const importedData = JSON.parse(e.target?.result as string);
-            if (importData(importedData)) {
+            const result = await importData(importedData);
+            if (result) {
               alert("Data imported successfully!");
             } else {
               alert("Invalid file format");
