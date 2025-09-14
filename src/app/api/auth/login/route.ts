@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 
-// These MUST be set in Vercel environment variables - no fallbacks for security
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 export async function POST(req: Request) {
   try {
-    // Security check - fail if environment variables aren't configured
     if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
       console.error(
         "Missing ADMIN_EMAIL or ADMIN_PASSWORD in environment variables"
@@ -27,14 +25,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify credentials
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       return NextResponse.json(
         { message: "Connexion réussie", role: "admin" },
         { status: 200 }
       );
     } else {
-      // Log failed attempts for security monitoring
       console.warn(`Failed admin login attempt for email: ${email}`);
       return NextResponse.json(
         { message: "Email ou mot de passe incorrect" },

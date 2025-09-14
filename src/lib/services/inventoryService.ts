@@ -1,12 +1,10 @@
-// src/lib/services/inventoryService.ts
 import {
   InventoryItem,
   StockTransaction,
   InventoryStats,
 } from "@/lib/types/inventory";
-import { api } from "./api"; // Import the general API client
+import { api } from "./api";
 
-// Define types for data sent to API
 export type CreateInventoryItemData = Omit<
   InventoryItem,
   "id" | "createdAt" | "updatedAt"
@@ -19,15 +17,12 @@ export type CreateStockTransactionData = Omit<
   "id" | "createdAt"
 >;
 
-// Type for export/import data structure
-interface InventoryExportData {
+export interface InventoryExportData {
   inventory: InventoryItem[];
   transactions: StockTransaction[];
   exportDate: string;
 }
 
-// Re-defining DailySummary here or importing from a dedicated types file if it existed
-// For now, mirroring from transactions page
 interface DailySummary {
   date: string;
   totalTransactionsCount: number;
@@ -38,7 +33,6 @@ interface DailySummary {
   lossFromBelowCostSales: number;
 }
 
-// API Service functions
 export const inventoryService = {
   getInventory: async (): Promise<InventoryItem[]> => {
     return api.get<InventoryItem[]>("/inventory");
@@ -62,7 +56,6 @@ export const inventoryService = {
   },
 
   getTransactions: async (): Promise<StockTransaction[]> => {
-    // In a real app, you might add filters here: /transactions?itemId=abc&type=stock_in
     return api.get<StockTransaction[]>("/transactions");
   },
 
@@ -83,12 +76,10 @@ export const inventoryService = {
   },
 
   importData: async (data: InventoryExportData): Promise<void> => {
-    // This assumes your backend has an endpoint to accept and process imported data
     return api.post<void>("/import", data);
   },
 
   getDailySummaries: async (dateRange?: string): Promise<DailySummary[]> => {
-    // Assuming backend will accept a dateRange query param if provided
     const endpoint = dateRange
       ? `/daily-summaries?range=${dateRange}`
       : "/daily-summaries";

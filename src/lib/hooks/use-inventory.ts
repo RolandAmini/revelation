@@ -1,19 +1,16 @@
-// src/lib/hooks/use-inventory.ts
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
-// REMOVED: import { useLocalStorage } from "./use-local-storage"; // No longer using localStorage
+import { useState, useCallback, useEffect } from "react";
 import {
   InventoryItem,
   StockTransaction,
   InventoryStats,
 } from "@/lib/types/inventory";
-import { calculateProfit } from "@/lib/utils"; // generateId is no longer here
 import {
-  inventoryService, // NEW: Import inventoryService
+  inventoryService,
   CreateInventoryItemData,
   UpdateInventoryItemData,
-  CreateStockTransactionData,
+  InventoryExportData,
 } from "@/lib/services/inventoryService";
 
 export function useInventory() {
@@ -32,34 +29,33 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to fetch all data - this is the core of refreshing state
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Use Promise.all to fetch multiple data points concurrently
       const [fetchedInventory, fetchedTransactions, fetchedStats] =
         await Promise.all([
           inventoryService.getInventory(),
           inventoryService.getTransactions(),
-          inventoryService.getStats(), // Fetch stats from backend
+          inventoryService.getStats(),
         ]);
 
       setInventory(fetchedInventory);
       setTransactions(fetchedTransactions);
-      setStats(fetchedStats); // Update stats from backend
-    } catch (err: any) {
-      console.error("Failed to fetch inventory data:", err);
-      setError(err.message || "Failed to fetch data.");
+      setStats(fetchedStats);
+    } catch (error) {
+      console.error("Failed to fetch inventory data:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch data."
+      );
     } finally {
       setLoading(false);
     }
-  }, []); // Dependencies are empty because `inventoryService` is stable
+  }, []);
 
-  // Initial data fetch on component mount
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // `fetchData` itself is memoized with `useCallback`
+  }, [fetchData]);
 
   const addItem = useCallback(
     async (
@@ -69,17 +65,18 @@ export function useInventory() {
       setError(null);
       try {
         const newItem = await inventoryService.createItem(itemData);
-        await fetchData(); // Refresh all data after successful addition
+        await fetchData();
         return newItem;
-      } catch (err: any) {
-        setError(err.message || "Failed to add item.");
-        // Re-throw if the calling component needs to handle the error more specifically
-        throw err;
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Failed to add item."
+        );
+        throw error;
       } finally {
         setLoading(false);
       }
     },
-    [fetchData] // `fetchData` is the dependency
+    [fetchData]
   );
 
   const updateItem = useCallback(
@@ -88,10 +85,12 @@ export function useInventory() {
       setError(null);
       try {
         await inventoryService.updateItem(id, updates);
-        await fetchData(); // Refresh all data after successful update
-      } catch (err: any) {
-        setError(err.message || "Failed to update item.");
-        throw err; // Re-throw to allow component to handle specific alerts
+        await fetchData();
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Failed to update item."
+        );
+        throw error;
       } finally {
         setLoading(false);
       }
@@ -105,10 +104,12 @@ export function useInventory() {
       setError(null);
       try {
         await inventoryService.deleteItem(id);
-        await fetchData(); // Refresh all data after successful deletion
-      } catch (err: any) {
-        setError(err.message || "Failed to delete item.");
-        throw err;
+        await fetchData();
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Failed to delete item."
+        );
+        throw error;
       } finally {
         setLoading(false);
       }
@@ -126,13 +127,17 @@ export function useInventory() {
       try {
         const newTransaction = await inventoryService.recordTransaction({
           ...transactionData,
-          itemId, // Ensure itemId is correctly passed in the transaction payload
+          itemId,
         });
-        await fetchData(); // Refresh all data (inventory stock levels, stats, transactions)
+        await fetchData();
         return newTransaction;
-      } catch (err: any) {
-        setError(err.message || "Failed to record transaction.");
-        throw err;
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to record transaction."
+        );
+        throw error;
       } finally {
         setLoading(false);
       }
@@ -140,15 +145,8 @@ export function useInventory() {
     [fetchData]
   );
 
-  // This `stats` object is now populated directly from the backend API via `setStats(fetchedStats)`.
-  // The client-side `useMemo` for `stats` is no longer needed here if the backend `/stats` endpoint is comprehensive.
-  // I've removed the client-side calculation to avoid redundancy and potential inconsistencies.
-  // The `stats` variable exported by the hook will be the one fetched from the API.
-
   const getItemTransactions = useCallback(
     (itemId: string) => {
-      // This will filter local state, but for large datasets, filtering should be done via API
-      // If `transactions` array grows very large, this filter should be moved to a backend API endpoint.
       return transactions
         .filter((transaction) => transaction.itemId === itemId)
         .sort(
@@ -163,8 +161,7 @@ export function useInventory() {
     setLoading(true);
     setError(null);
     try {
-      // Call backend API endpoint for export. Backend generates and returns the JSON payload.
-      const exported = await inventoryService.exportData(); // Backend returns the full data
+      const exported = await inventoryService.exportData();
       const dataStr = JSON.stringify(exported, null, 2);
       const dataUri =
         "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
@@ -175,31 +172,32 @@ export function useInventory() {
       const linkElement = document.createElement("a");
       linkElement.setAttribute("href", dataUri);
       linkElement.setAttribute("download", exportFileDefaultName);
-      document.body.appendChild(linkElement); // Append to body to make it clickable
+      document.body.appendChild(linkElement);
       linkElement.click();
-      document.body.removeChild(linkElement); // Clean up
-    } catch (err: any) {
-      setError(err.message || "Failed to export data.");
-      throw err;
+      document.body.removeChild(linkElement);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to export data."
+      );
+      throw error;
     } finally {
       setLoading(false);
     }
   }, []);
 
   const importData = useCallback(
-    async (data: {
-      inventory: InventoryItem[];
-      transactions: StockTransaction[];
-    }): Promise<boolean> => {
+    async (data: InventoryExportData): Promise<boolean> => {
       setLoading(true);
       setError(null);
       try {
         await inventoryService.importData(data);
-        await fetchData(); // Refresh data after import
+        await fetchData();
         return true;
-      } catch (err: any) {
-        setError(err.message || "Failed to import data.");
-        throw err;
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Failed to import data."
+        );
+        throw error;
       } finally {
         setLoading(false);
       }
@@ -212,7 +210,7 @@ export function useInventory() {
     transactions,
     loading,
     error,
-    stats, // Now comes from state, set by API call
+    stats,
     addItem,
     updateItem,
     deleteItem,
@@ -220,6 +218,6 @@ export function useInventory() {
     getItemTransactions,
     exportData,
     importData,
-    fetchData, // Expose refetch function if needed for manual refresh
+    fetchData,
   };
 }
