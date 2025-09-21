@@ -214,12 +214,12 @@ export default function AddItemForm({
         <form onSubmit={handleSubmit} className="grid gap-6 py-4">
           <section className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b pb-2">
-              Basic Information
+           Informations de base
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="item-name">Product Name *</Label>
+                <Label htmlFor="item-name">Nom du produit *</Label>
                 <Input
                   id="item-name"
                   type="text"
@@ -234,7 +234,7 @@ export default function AddItemForm({
                 )}
               </div>
               <div>
-                <Label htmlFor="item-category">Category *</Label>
+                <Label htmlFor="item-category">Catégorie *</Label>
                 <div className="mt-1 space-y-2">
                   <Select
                     value={displayCategoryValue}
@@ -259,7 +259,7 @@ export default function AddItemForm({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={CATEGORY_SELECT_PLACEHOLDER}>
-                        Select existing category
+                       Sélectionnez une catégorie existante
                       </SelectItem>
                       {categories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
@@ -270,7 +270,7 @@ export default function AddItemForm({
                         value={CATEGORY_ADD_NEW_OPTION}
                         className="font-semibold text-blue-600"
                       >
-                        + Add New Category
+                      + Ajouter une nouvelle catégorie
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -332,7 +332,7 @@ export default function AddItemForm({
                     disabled={!formData.category}
                     className="whitespace-nowrap"
                   >
-                    Generate
+                    Générer
                   </Button>
                 </div>
                 {errors.sku && (
@@ -341,7 +341,7 @@ export default function AddItemForm({
               </div>
 
               <div>
-                <Label htmlFor="item-supplier">Supplier (Optional)</Label>
+                <Label htmlFor="item-supplier">Fournisseur(Optional)</Label>
                 <Input
                   id="item-supplier"
                   type="text"
@@ -359,12 +359,12 @@ export default function AddItemForm({
 
           <section className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b pb-2">
-              Pricing
+             Tarifs
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="buy-price">Buy Price *</Label>
+                <Label htmlFor="buy-price">Prix ​​dachat *</Label>
                 <Input
                   id="buy-price"
                   type="number"
@@ -391,7 +391,7 @@ export default function AddItemForm({
               </div>
 
               <div>
-                <Label htmlFor="sell-price">Sell Price *</Label>
+                <Label htmlFor="sell-price">Prix ​​de vente*</Label>
                 <Input
                   id="sell-price"
                   type="number"
@@ -421,7 +421,7 @@ export default function AddItemForm({
             {formData.buyPrice > 0 && formData.sellPrice > 0 && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-700">
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Profit Margin:</span>{" "}
+                  <span className="font-medium">Marge bénéficiaire:</span>{" "}
                   <span
                     className={
                       formData.sellPrice > formData.buyPrice
@@ -444,12 +444,12 @@ export default function AddItemForm({
 
           <section className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b pb-2">
-              Stock Management
+           Gestion des stocks
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="current-stock">Initial Stock</Label>
+                <Label htmlFor="current-stock">Stock initial</Label>
                 <Input
                   id="current-stock"
                   type="number"
@@ -481,7 +481,7 @@ export default function AddItemForm({
               </div>
 
               <div>
-                <Label htmlFor="min-stock">Min Stock Level</Label>
+                <Label htmlFor="min-stock">Niveau de stock minimum</Label>
                 <Input
                   id="min-stock"
                   type="number"
@@ -507,7 +507,7 @@ export default function AddItemForm({
               </div>
 
               <div>
-                <Label htmlFor="max-stock">Max Stock Level</Label>
+                <Label htmlFor="max-stock">Niveau de stock maximum</Label>
                 <Input
                   id="max-stock"
                   type="number"
@@ -535,7 +535,7 @@ export default function AddItemForm({
 
             <div>
               <Label htmlFor="storage-location">
-                Storage Location (Optional)
+               Emplacement de stockage (Optional)
               </Label>
               <Input
                 id="storage-location"
@@ -556,7 +556,7 @@ export default function AddItemForm({
               onClick={handleCancel}
               className="text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               type="submit"
