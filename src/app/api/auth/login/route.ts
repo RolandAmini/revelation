@@ -1,66 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDB } from "@/utils/mongodb";
-import User from "@/models/User";
 import jwt from "jsonwebtoken";
+import {connectDB} from "@/utils/mongodb";
+import User from "@/models/User";
 
-export async function POST(request: NextRequest) {
+export async function POST(request) {
   try {
     const { email, password } = await request.json();
-    console.log("🟢 Requête reçue :", { email, password });
 
+    // Validation des champs
     if (!email || !password) {
-      return NextResponse.json({ message: "Email et mot de passe requis" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email et mot de passe requis" },
+        { status: 400 }
+      );
     }
 
+    // Connexion à la base de données
     await connectDB();
-    console.log("✅ MongoDB connecté");
 
+    // Recherche de l'utilisateur
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("❌ Utilisateur non trouvé :", email);
-      return NextResponse.json({ message: "Utilisateur non trouvé" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
     }
 
+    // Vérification du mot de passe
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("❌ Mot de passe incorrect pour :", email);
-      return NextResponse.json({ message: "Mot de passe incorrect" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Mot de passe incorrect" },
+        { status: 401 }
+      );
     }
 
-    // Vérifie si le secret JWT existe
-    if (!process.env.JWT_SECRET) {
-      console.error("❌ JWT_SECRET manquant dans .env !");
-      return NextResponse.json({ message: "Problème de configuration du serveur" }, { status: 500 });
+    // Vérification du rôle admin
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Accès refusé. Vous n'êtes pas administrateur." },
+        { status: 403 }
+      );
     }
 
-    console.log("🔐 Génération du token JWT...");
+    // Génération du token JWT
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      { 
+        userId: user._id, 
+        email: user.email, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET || "votre_secret_jwt_ultra_securise",
       { expiresIn: "7d" }
     );
 
-    const response = NextResponse.json({
-      message: "Connexion réussie",
-      user: { email: user.email, role: user.role },
-    });
+    console.log("✅ Connexion réussie :", user.email, "- Rôle :", user.role);
 
+    // Création de la réponse avec cookie
+    const response = NextResponse.json(
+      {
+        success: true,
+        role: user.role,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      },
+      { status: 200 }
+    );
+
+    // Ajout du cookie sécurisé
     response.cookies.set("auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 jours
+      path: "/"
     });
 
-    console.log(`✅ Connexion réussie : ${email} - Rôle : ${user.role}`);
     return response;
 
   } catch (error) {
-    console.error("❌ ERREUR SERVEUR DÉTAILLÉE :", error);
-    const errorMessage = typeof error === "object" && error !== null && "message" in error
-      ? (error as { message: string }).message
-      : String(error);
-    return NextResponse.json({ message: "Erreur interne du serveur", error: errorMessage }, { status: 500 });
+    console.error("❌ Erreur login :", error);
+    return NextResponse.json(
+      { error: "Erreur serveur" },
+      { status: 500 }
+    );
   }
 }
