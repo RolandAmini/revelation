@@ -23,11 +23,7 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Sauvegarde une info dans le localStorage
-        localStorage.setItem("isAdmin", "true");
-
-        // Redirige vers le dashboard
-        router.push("/admin/dashboard");
+        router.push("/admin/dashboard"); // ✅ redirection directe
       } else {
         setError(data.message || "Identifiants incorrects");
       }
