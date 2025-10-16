@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -10,4 +10,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.models.User || mongoose.model("User", userSchema);
+// Empêche la recréation du modèle à chaque rechargement (utile avec Next.js)
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+export default User;
