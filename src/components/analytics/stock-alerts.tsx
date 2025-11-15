@@ -34,17 +34,17 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-success" />
-            Stock Alerts
+           Alertes boursières
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <Package className="h-12 w-12 text-success mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-success mb-2">
-              All Good! 🎉
+              Tout va bien ! 🎉
             </h3>
             <p className="text-sm text-muted-foreground">
-              All your inventory items are properly stocked.
+             Tous vos articles en stock sont correctement rangés.
             </p>
           </div>
         </CardContent>
@@ -60,7 +60,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Critical: Out of Stock ({outOfStockItems.length})
+            Urgent : Rupture de stock({outOfStockItems.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -74,7 +74,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                     <h4 className="font-medium">{item.name}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                       <span>SKU: {item.sku}</span>
-                      <span>Category: {item.category}</span>
+                      <span>Categorie: {item.category}</span>
                       <span>
                         Value Lost:{" "}
                         {formatCurrency(item.sellPrice * item.minStockLevel)}
@@ -86,13 +86,13 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                     onClick={() => onStockIn(item)}
                     className="ml-4"
                   >
-                    Restock Now
+                  Réapprovisionner maintenant
                   </Button>
                 </div>
               ))}
               {outOfStockItems.length > 5 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  And {outOfStockItems.length - 5} more items...
+                 Et {outOfStockItems.length - 5} plus d'articles...
                 </p>
               )}
             </div>
@@ -106,7 +106,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-warning">
               <TrendingDown className="h-5 w-5" />
-              Warning: Low Stock ({lowStockItems.length})
+             Attention : stock faible ({lowStockItems.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -128,7 +128,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                           variant="outline"
                           className="text-xs border-yellow-500 text-yellow-700"
                         >
-                          {item.currentStock} left
+                          {item.currentStock} gauche
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -143,14 +143,14 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                       onClick={() => onStockIn(item)}
                       className="ml-4"
                     >
-                      Restock
+                  Réapprovisionner
                     </Button>
                   </div>
                 );
               })}
               {lowStockItems.length > 5 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  And {lowStockItems.length - 5} more items...
+                  And {lowStockItems.length - 5} plus d'articles...
                 </p>
               )}
             </div>
@@ -164,7 +164,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-600">
               <Package className="h-5 w-5" />
-              Info: Overstocked ({overstockItems.length})
+             Info : Surstock ({overstockItems.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -183,18 +183,18 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium">{item.name}</h4>
                         <Badge variant="secondary" className="text-xs">
-                          +{excessStock} excess
+                          +{excessStock} excès
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Current: {item.currentStock}</span>
-                        <span>Max: {item.maxStockLevel}</span>
-                        <span>Excess Value: {formatCurrency(excessValue)}</span>
+                        <span>Actuel: {item.currentStock}</span>
+                        <span>Maximal: {item.maxStockLevel}</span>
+                        <span>Valeur excédentaire : {formatCurrency(excessValue)}</span>
                       </div>
                     </div>
                     <div className="text-right text-sm text-muted-foreground">
-                      <p>Consider reducing</p>
-                      <p>future orders</p>
+                      <p> Pensez à réduire</p>
+                      <p>commandes futures</p>
                     </div>
                   </div>
                 );

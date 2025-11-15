@@ -299,7 +299,7 @@ export default function ProfitLossChart({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Revenu total</p>
                 <p className="text-lg font-bold text-primary">
                   {formatCurrency(totalStats.revenue)}
                 </p>
@@ -313,7 +313,7 @@ export default function ProfitLossChart({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Cost</p>
+                <p className="text-sm text-muted-foreground">Coût total</p>
                 <p className="text-lg font-bold text-destructive">
                   {formatCurrency(totalStats.cost)}
                 </p>
@@ -327,7 +327,7 @@ export default function ProfitLossChart({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Net Profit</p>
+                <p className="text-sm text-muted-foreground">Bénéfice net</p>
                 <p
                   className={`text-lg font-bold ${
                     totalStats.profit >= 0 ? "text-success" : "text-destructive"
@@ -366,7 +366,7 @@ export default function ProfitLossChart({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Profit & Loss Analysis
+              Analyse des profits et pertes
             </CardTitle>
             <div className="flex gap-2">
               <Select
@@ -375,10 +375,10 @@ export default function ProfitLossChart({
                   onPeriodChange(value as "week" | "month" | "quarter" | "year")
                 }
               >
-                <option value="week">Past Week</option>
-                <option value="month">Past Month</option>
-                <option value="quarter">Past Quarter</option>
-                <option value="year">Past Year</option>
+                <option value="week">La semaine dernière</option>
+                <option value="month">Mois passé</option>
+                <option value="quarter">Trimestre passé</option>
+                <option value="year">Année passée</option>
               </Select>
               <Select
                 value={chartType}
@@ -386,9 +386,9 @@ export default function ProfitLossChart({
                   setChartType(value as "line" | "area" | "bar")
                 }
               >
-                <option value="line">Line Chart</option>
-                <option value="area">Area Chart</option>
-                <option value="bar">Bar Chart</option>
+                <option value="line">Graphique linéaire</option>
+                <option value="area">Graphique en aires</option>
+                <option value="bar">Graphique à barres</option>
               </Select>
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function ProfitLossChart({
             <div className="flex items-center justify-center h-64 text-muted-foreground">
               <div className="text-center">
                 <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No transaction data available for the selected period.</p>
+                <p>Aucune donnée transactionnelle disponible pour la période sélectionnée.</p>
               </div>
             </div>
           ) : (
@@ -412,7 +412,7 @@ export default function ProfitLossChart({
       {/* Profit Margin Trend */}
       <Card>
         <CardHeader>
-          <CardTitle>Profit Margin Trend</CardTitle>
+          <CardTitle>Tendance de la marge bénéficiaire</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>

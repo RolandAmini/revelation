@@ -227,7 +227,7 @@ export default function DashboardPage() {
                   Dashboard
                 </h1>
                 <p className="text-muted-foreground">
-                  Welcome back! Heres your inventory overview.
+                 Bienvenue ! Voici un aperçu de votre inventaire.
                 </p>
               </div>
               <Button
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Item
+              Ajouter un article
               </Button>
             </div>
 
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                 {/* Use bg-card/text-card-foreground */}
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Items
+                   Total des articles
                   </CardTitle>
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
@@ -255,7 +255,7 @@ export default function DashboardPage() {
                     {stats.totalItems}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Items in inventory
+                    Articles en inventaire
                   </p>
                 </CardContent>
               </Card>
@@ -263,7 +263,7 @@ export default function DashboardPage() {
               <Card className="bg-card text-card-foreground">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Value
+                  Valeur totale
                   </CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                     {formatCurrency(stats.totalValue)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Current inventory value
+                    Valeur actuelle de l'inventaire
                   </p>
                 </CardContent>
               </Card>
@@ -280,7 +280,7 @@ export default function DashboardPage() {
               <Card className="bg-card text-card-foreground">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Profit
+                    Bénéfice total
                   </CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
@@ -295,7 +295,7 @@ export default function DashboardPage() {
                     {formatCurrency(stats.totalProfit)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Revenue minus costs
+                    Revenus moins coûts
                   </p>
                 </CardContent>
               </Card>
@@ -303,7 +303,7 @@ export default function DashboardPage() {
               <Card className="bg-card text-card-foreground">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Stock Alerts
+                    Alertes boursières
                   </CardTitle>
                   <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
                 </CardHeader>
@@ -312,7 +312,7 @@ export default function DashboardPage() {
                     {lowStockItems.length + outOfStockItems.length}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Items need attention
+                   Les éléments nécessitent une attention particulière
                   </p>
                 </CardContent>
               </Card>
