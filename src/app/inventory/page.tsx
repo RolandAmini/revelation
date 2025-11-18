@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-
 import { useInventory } from "@/lib/hooks/use-inventory";
 import {
   InventoryItem,
@@ -219,10 +218,10 @@ export default function InventoryPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  Inventory
+                Inventaire
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Manage your inventory items and stock levels.
+                 Gérez vos articles en stock et vos niveaux de stock.
                 </p>
               </div>
               <Button
@@ -230,14 +229,14 @@ export default function InventoryPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Item
+             Ajouter un article
               </Button>
             </div>
 
             <Card className="p-6">
               <CardHeader className="p-0 pb-4">
                 <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Filter & Sort Inventory
+                  Filtrer et trier l'inventaire
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -260,7 +259,7 @@ export default function InventoryPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-gray-900 dark:text-gray-100">
-                  Inventory Items
+                 Articles en stock
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -312,7 +311,7 @@ export default function InventoryPage() {
                 {itemForDetails.name} Details
               </DialogTitle>
               <DialogDescription>
-                Comprehensive view of your inventory item.
+               Vue d'ensemble de votre article en stock.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4 text-gray-900 dark:text-gray-100">
@@ -325,40 +324,40 @@ export default function InventoryPage() {
                 <p>{itemForDetails.description || "N/A"}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Category</Label>
+                <Label className="text-muted-foreground">Categorie</Label>
                 <Badge variant="secondary">{itemForDetails.category}</Badge>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground">Current Stock</Label>
+                  <Label className="text-muted-foreground">Stock actuel</Label>
                   <p className="font-medium">{itemForDetails.currentStock}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">
-                    Min Stock Level
+                    Niveau de stock minimum
                   </Label>
                   <p className="font-medium">{itemForDetails.minStockLevel}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Buy Price</Label>
+                  <Label className="text-muted-foreground">Prix ​​d'achat</Label>
                   <p className="font-medium">
                     {formatCurrency(itemForDetails.buyPrice)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Sell Price</Label>
+                  <Label className="text-muted-foreground">Prix ​​de vente</Label>
                   <p className="font-medium">
                     {formatCurrency(itemForDetails.sellPrice)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Created At</Label>
+                  <Label className="text-muted-foreground">Créé à</Label>
                   <p className="font-medium">
                     {formatDate(itemForDetails.createdAt)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Last Updated</Label>
+                  <Label className="text-muted-foreground">Dernière mise à jour</Label>
                   <p className="font-medium">
                     {formatDate(itemForDetails.updatedAt)}
                   </p>
@@ -366,7 +365,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={() => setShowItemDetails(false)}>Close</Button>
+              <Button onClick={() => setShowItemDetails(false)}>Fermer</Button>
             </div>
           </DialogContent>
         </Dialog>

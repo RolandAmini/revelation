@@ -224,7 +224,7 @@ export default function DashboardPage() {
               <div>
                 {/* Use text-foreground for dynamic text color */}
                 <h1 className="text-3xl font-bold text-foreground">
-                  Dashboard
+                  Tableau de bord
                 </h1>
                 <p className="text-muted-foreground">
                  Bienvenue ! Voici un aperçu de votre inventaire.
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                     {formatCurrency(stats.totalValue)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Valeur actuelle de l'inventaire
+                    Valeur actuelle de l&apos;inventaire
                   </p>
                 </CardContent>
               </Card>

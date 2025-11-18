@@ -20,6 +20,18 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_|^__v$",
+          caughtErrorsIgnorePattern: "^_"
+        }
+      ]
+    }
+  }
 ];
 
 export default eslintConfig;
