@@ -37,14 +37,14 @@ const InventorySchema: Schema<InventoryDocument> = new Schema(
       // Let TypeScript infer the types of 'doc' and 'ret'.
       transform: (doc, ret) => {
         // Then, cast 'ret' to our simple, known shape before using it.
-        const { _id, __v, ...cleanRet } = ret as MongooseRet;
+        const { _id, __v: _v, ...cleanRet } = ret as MongooseRet;
         return { ...cleanRet, id: _id.toString() };
       },
     },
     toObject: {
       virtuals: true,
       transform: (doc, ret) => {
-        const { _id, __v, ...cleanRet } = ret as MongooseRet;
+        const { _id, __v: _v, ...cleanRet } = ret as MongooseRet;
         return { ...cleanRet, id: _id.toString() };
       },
     },

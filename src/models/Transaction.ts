@@ -37,7 +37,7 @@ const TransactionSchema: Schema<TransactionDocument> = new Schema(
       // THE FINAL FIX: Let TypeScript infer the types for 'doc' and 'ret' here.
       transform: (doc, ret) => {
         // THEN, cast 'ret' to our simple, known shape before using it.
-        const { _id, __v, ...cleanRet } = ret as MongooseRet;
+        const { _id, __v: _v, ...cleanRet } = ret as MongooseRet;
         return { ...cleanRet, id: _id.toString() };
       },
     },
@@ -45,7 +45,7 @@ const TransactionSchema: Schema<TransactionDocument> = new Schema(
       virtuals: true,
       // Also apply the fix here.
       transform: (doc, ret) => {
-        const { _id, __v, ...cleanRet } = ret as MongooseRet;
+        const { _id, __v: _v, ...cleanRet } = ret as MongooseRet;
         return { ...cleanRet, id: _id.toString() };
       },
     },
