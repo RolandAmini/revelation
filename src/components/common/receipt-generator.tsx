@@ -3,8 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { InventoryItem, StockTransaction } from "@/lib/types/inventory";
+import { formatCurrency} from "@/lib/utils";
 
 interface ReceiptData {
   type: "sale" | "purchase" | "inventory_report";

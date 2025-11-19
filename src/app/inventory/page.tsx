@@ -236,7 +236,7 @@ export default function InventoryPage() {
             <Card className="p-6">
               <CardHeader className="p-0 pb-4">
                 <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Filtrer et trier l'inventaire
+                  Filtrer et trier l&apos;inventaire
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -311,7 +311,7 @@ export default function InventoryPage() {
                 {itemForDetails.name} Details
               </DialogTitle>
               <DialogDescription>
-               Vue d'ensemble de votre article en stock.
+               Vue d&apos;ensemble de votre article en stock.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4 text-gray-900 dark:text-gray-100">

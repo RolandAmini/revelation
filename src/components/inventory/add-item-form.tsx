@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Package } from "lucide-react";
+import {  Package } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
   Dialog,
@@ -23,10 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { InventoryItem } from "@/lib/types/inventory"; // Assuming this type exists
+import { InventoryItem } from "@/lib/types/inventory";
 
-// Define a type for the data managed *by the form state itself*
-// This type explicitly does NOT include 'id', 'createdAt', 'updatedAt'
 type AddItemFormDataType = Omit<
   InventoryItem,
   "id" | "createdAt" | "updatedAt"
@@ -35,10 +33,10 @@ type AddItemFormDataType = Omit<
 interface AddItemFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // MODIFIED: onSubmit now takes AddItemFormDataType PLUS an optional 'id'
+ 
   onSubmit: (
-    itemData: AddItemFormDataType & { id?: string } // Combined type for onSubmit
-  ) => void | Promise<void>; // <--- Change this line
+    itemData: AddItemFormDataType & { id?: string } 
+  ) => void | Promise<void>; 
   categories: string[];
   itemToEdit?: InventoryItem | null;
 }
@@ -55,7 +53,7 @@ export default function AddItemForm({
 }: AddItemFormProps) {
   const isEditing = !!itemToEdit;
 
-  // Use the defined AddItemFormDataType for initial state and formData
+  
   const initialFormState: AddItemFormDataType = useMemo(
     () => ({
       name: "",
@@ -105,7 +103,7 @@ export default function AddItemForm({
   }, [open, isEditing, itemToEdit, categories, initialFormState]);
 
   const handleInputChange = (
-    field: keyof AddItemFormDataType, // Use AddItemFormDataType here
+    field: keyof AddItemFormDataType,
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -175,10 +173,9 @@ export default function AddItemForm({
       return;
     }
 
-    // Now, explicitly create the object that matches the onSubmit prop's type
     const submitData: AddItemFormDataType & { id?: string } = isEditing
       ? { ...formData, id: itemToEdit!.id }
-      : { ...formData, id: undefined }; // Explicitly set id to undefined for new items
+      : { ...formData, id: undefined }; 
 
     onSubmit(submitData);
   };
@@ -364,9 +361,9 @@ export default function AddItemForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="buy-price">Prix ​​dachat *</Label>
+                <Label htmlFor="buy-price">Prix d&apos;​​achat *</Label>
                 <Input
-                  id="buy-price"
+                  id="buy-price"  
                   type="number"
                   step="0.01"
                   min="0"

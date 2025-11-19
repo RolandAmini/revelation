@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InventoryItem } from "@/lib/types/inventory";
-import { formatCurrency, getStockStatus } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 interface StockAlertsProps {
   items: InventoryItem[];
@@ -92,7 +92,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
               ))}
               {outOfStockItems.length > 5 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                 Et {outOfStockItems.length - 5} plus d'articles...
+                 Et {outOfStockItems.length - 5} plus d&apos;articles...
                 </p>
               )}
             </div>
@@ -106,7 +106,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-warning">
               <TrendingDown className="h-5 w-5" />
-             Attention : stock faible ({lowStockItems.length})
+             Attention: stock faible ({lowStockItems.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -150,7 +150,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
               })}
               {lowStockItems.length > 5 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  And {lowStockItems.length - 5} plus d'articles...
+                  And {lowStockItems.length - 5} plus d&apos;articles...
                 </p>
               )}
             </div>
@@ -189,7 +189,7 @@ export default function StockAlerts({ items, onStockIn }: StockAlertsProps) {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Actuel: {item.currentStock}</span>
                         <span>Maximal: {item.maxStockLevel}</span>
-                        <span>Valeur excédentaire : {formatCurrency(excessValue)}</span>
+                        <span>Valeur excédentaire : {formatCurrency(excessValue)}</span>
                       </div>
                     </div>
                     <div className="text-right text-sm text-muted-foreground">

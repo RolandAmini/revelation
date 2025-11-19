@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
       } else {
         setError(data.message || "Identifiants incorrects");
       }
-    } catch (err) {
+  } catch (_err) {
       setError("Erreur serveur");
     }
   };

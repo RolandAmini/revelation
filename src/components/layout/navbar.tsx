@@ -7,13 +7,13 @@ import {
   Package,
   BarChart3,
   History,
-  Settings,
   Menu,
   Sun,
   Moon,
   Download,
   Upload,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
