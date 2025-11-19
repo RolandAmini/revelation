@@ -1,26 +1,25 @@
-// src/models/DailySummary.ts
+
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-// Re-defining DailySummary interface for the backend model,
-// ensure it aligns with the frontend's DailySummary type in transactions.tsx
+
 interface IDailySummary {
-  date: string; // Formatted date string, e.g., "Jan 1, 2023" or "YYYY-MM-DD" for _id
+  date: string; 
   totalTransactionsCount: number;
-  totalMoneyIn: number; // Sum of stock_out totalAmount
-  totalMoneyOut: number; // Sum of stock_in totalAmount
-  netFlow: number; // totalMoneyIn - totalMoneyOut
-  grossProfitFromSales: number; // (sellPrice - buyPrice) * quantity for stock_out
-  lossFromBelowCostSales: number; // (buyPrice - sellPrice) * quantity for stock_out where sellPrice < buyPrice
-  updatedAt: string; // When this summary was last calculated/updated
+  totalMoneyIn: number; 
+  totalMoneyOut: number; 
+  netFlow: number; 
+  grossProfitFromSales: number; 
+  lossFromBelowCostSales: number; 
+  updatedAt: string; 
 }
 
 export interface DailySummaryDocument extends IDailySummary, Document {}
 
 const DailySummarySchema: Schema<DailySummaryDocument> = new Schema(
   {
-    // Use date string as _id for easy lookup and uniqueness per day
-    _id: { type: String, required: true }, // e.g., "YYYY-MM-DD"
-    date: { type: String, required: true }, // Formatted for display, e.g., "Jan 1, 2023"
+    
+    _id: { type: String, required: true }, 
+    date: { type: String, required: true }, 
     totalTransactionsCount: {
       type: Number,
       required: true,
@@ -39,6 +38,7 @@ const DailySummarySchema: Schema<DailySummaryDocument> = new Schema(
     toJSON: {
       virtuals: true,
       transform: (doc, ret) => {
+       
         const { __v: _v, _id, ...cleanRet } = ret;
         return { ...cleanRet, id: ret._id };
       },
@@ -46,6 +46,7 @@ const DailySummarySchema: Schema<DailySummaryDocument> = new Schema(
     toObject: {
       virtuals: true,
       transform: (doc, ret) => {
+    
         const { __v: _v, _id, ...cleanRet } = ret;
         return { ...cleanRet, id: ret._id };
       },

@@ -1,13 +1,13 @@
-// src/models/Inventory.ts
+
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { InventoryItem } from "@/lib/types/inventory";
 
-// Use the Omit pattern that we know works from Transaction.ts
+
 export interface InventoryDocument
   extends Omit<InventoryItem, "id">,
     Document {}
 
-// A simple, minimal interface describing the shape of Mongoose's 'ret' object.
+
 interface MongooseRet {
   _id: { toString: () => string };
   __v: number;
@@ -34,9 +34,9 @@ const InventorySchema: Schema<InventoryDocument> = new Schema(
     timestamps: false,
     toJSON: {
       virtuals: true,
-      // Let TypeScript infer the types of 'doc' and 'ret'.
+     
       transform: (doc, ret) => {
-        // Then, cast 'ret' to our simple, known shape before using it.
+       
         const { _id, __v: _v, ...cleanRet } = ret as MongooseRet;
         return { ...cleanRet, id: _id.toString() };
       },
@@ -44,6 +44,7 @@ const InventorySchema: Schema<InventoryDocument> = new Schema(
     toObject: {
       virtuals: true,
       transform: (doc, ret) => {
+      
         const { _id, __v: _v, ...cleanRet } = ret as MongooseRet;
         return { ...cleanRet, id: _id.toString() };
       },

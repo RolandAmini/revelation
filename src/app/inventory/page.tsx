@@ -140,7 +140,7 @@ export default function InventoryPage() {
     await updateItem(id, itemData);
     setShowEditItem(false);
     setItemToEdit(null);
-    alert(`Item "${itemData.name || "Item"}" updated successfully!`);
+   alert(`Item "${itemData.name || "Item"}" updated successfully!`);
   };
 
   const handleDelete = async (item: InventoryItem) => {
@@ -339,7 +339,7 @@ export default function InventoryPage() {
                   <p className="font-medium">{itemForDetails.minStockLevel}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Prix ​​d'achat</Label>
+                  <Label className="text-muted-foreground">Prix d&apos;achat</Label>
                   <p className="font-medium">
                     {formatCurrency(itemForDetails.buyPrice)}
                   </p>
